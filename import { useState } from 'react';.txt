@@ -1,0 +1,100 @@
+import { useState } from 'react';
+import { ethers } from 'ethers';
+import { create } from 'ipfs-http-client';
+import nacl from 'tweetnacl';
+import { generateSymmetricKey, encryptFile, wrapKey } from '../../lib/crypto';
+
+export const FileShare = () => {
+  const [recipient, setRecipient] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [status, setStatus] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleShare = async () => {
+    if (!file) {
+      setStatus('Please select a file');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setStatus('Encrypting file...');
+
+      const data = await file.arrayBuffer();
+      const key = generateSymmetricKey();
+      const { iv, data: encrypted } = await encryptFile(data, key);
+
+      setStatus('Uploading to IPFS...');
+      const ipfs = create({ url: process.env.VITE_IPFS_URL || 'https://ipfs.infura.io:5001/api/v0' });
+      const added = await ipfs.add(encrypted);
+
+      setStatus('Wrapping encryption key...');
+      const recipientPkBytes = ethers.getBytes(recipient);
+      const senderKeyPair = nacl.box.keyPair();
+      const { nonce, wrapped } = wrapKey(key, recipientPkBytes, senderKeyPair.secretKey);
+
+      setStatus('Storing metadata on Hedera...');
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contractAddress = process.env.VITE_CONTRACT_ADDRESS;
+      
+      if (!contractAddress) {
+        throw new Error('Contract address not configured');
+      }
+
+      const contract = new ethers.Contract(
+        contractAddress,
+        ['function shareFile(address recipient, bytes memory encryptedKey, string memory ipfsCid, bytes memory iv) public'],
+        signer
+      );
+
+      const encryptedKey = ethers.concat([nonce, wrapped]);
+      const tx = await contract.shareFile(recipient, encryptedKey, added.path, iv);
+      await tx.wait();
+
+      setStatus(`File shared successfully! CID: ${added.path}`);
+    } catch (error: any) {
+      setStatus(`Error: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="p-6 max-w-md mx-auto bg-white rounded-lg shadow-md">
+      <h2 className="text-2xl font-bold mb-4">Share Encrypted File</h2>
+      
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2">Select File</label>
+        <input
+          type="file"
+          onChange={e => setFile(e.target.files?.[0] || null)}
+          className="w-full p-2 border rounded"
+        />
+      </div>
+
+      <div className="mb-4">
+        <label className="block text-sm font-medium mb-2">Recipient Address</label>
+        <input
+          type="text"
+          placeholder="0x..."
+          value={recipient}
+          onChange={e => setRecipient(e.target.value)}
+          className="w-full p-2 border rounded"
+        />
+      </div>
+
+      <button
+        onClick={handleShare}
+        disabled={loading || !file || !recipient}
+        className="w-full bg-blue-500 text-white p-2 rounded hover:bg-blue-600 disabled:bg-gray-300"
+      >
+        {loading ? 'Processing...' : 'Share File'}
+      </button>
+
+      {status && (
+        <p className="mt-4 text-sm text-gray-600">{status}</p>
+      )}
+    </div>
+  );
+};

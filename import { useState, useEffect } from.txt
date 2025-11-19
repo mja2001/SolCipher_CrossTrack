@@ -1,0 +1,72 @@
+import { useState, useEffect } from 'react';
+import { ethers } from 'ethers';
+
+export const WalletConnect = () => {
+  const [account, setAccount] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    checkConnection();
+  }, []);
+
+  const checkConnection = async () => {
+    if (window.ethereum) {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const accounts = await provider.listAccounts();
+      if (accounts.length > 0) {
+        setAccount(accounts[0].address);
+      }
+    }
+  };
+
+  const connectWallet = async () => {
+    if (!window.ethereum) {
+      alert('Please install MetaMask or another Web3 wallet');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      await provider.send('eth_requestAccounts', []);
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+      setAccount(address);
+    } catch (error: any) {
+      console.error('Failed to connect wallet:', error);
+      alert(`Failed to connect: ${error.message}`);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const disconnectWallet = () => {
+    setAccount(null);
+  };
+
+  return (
+    <div className="flex items-center gap-4">
+      {account ? (
+        <>
+          <span className="text-sm text-gray-600">
+            {account.slice(0, 6)}...{account.slice(-4)}
+          </span>
+          <button
+            onClick={disconnectWallet}
+            className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+          >
+            Disconnect
+          </button>
+        </>
+      ) : (
+        <button
+          onClick={connectWallet}
+          disabled={loading}
+          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:bg-gray-300"
+        >
+          {loading ? 'Connecting...' : 'Connect Wallet'}
+        </button>
+      )}
+    </div>
+  );
+};
