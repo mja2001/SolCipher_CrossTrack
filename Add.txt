@@ -1,0 +1,3 @@
+REACT_APP_SOLANA_RPC=https://api.devnet.solana.com
+REACT_APP_PROGRAM_ID=<your_program_id>
+WEB3STORAGE_TOKEN=<your_token_from_web3.storage>

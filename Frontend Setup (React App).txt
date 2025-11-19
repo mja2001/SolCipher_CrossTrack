@@ -1,0 +1,5 @@
+cd C:\Users\Dell\Downloads
+mkdir solcipher-app
+cd solcipher-app
+npx create-react-app .
+yarn add @coral-xyz/anchor @solana/web3.js

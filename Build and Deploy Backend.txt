@@ -1,0 +1,4 @@
+anchor build
+solana-keygen new --no-bip39-passphrase  // Create wallet if needed
+solana airdrop 2  // Get test SOL
+anchor deploy
