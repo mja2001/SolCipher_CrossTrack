@@ -1,0 +1,3 @@
+cd C:\Users\Dell\Downloads
+anchor init solcipher-backend
+cd solcipher-backend
