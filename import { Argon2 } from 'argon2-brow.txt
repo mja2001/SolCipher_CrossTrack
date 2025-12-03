@@ -1,0 +1,11 @@
+import { Argon2 } from 'argon2-browser';
+
+export async function encryptFile(file, password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const key = await Argon2.hash({ pass: password, salt, type: Argon2.ArgonType.Argon2id, memory: 64 * 1024, hashLength: 32 });
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const enc = new TextEncoder();
+  const data = await file.arrayBuffer();
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key.hash, data);
+  return { encrypted: new Blob([iv, salt, encrypted]), mime: file.type };
+}

@@ -1,0 +1,9 @@
+import { Kilt } from '@kiltprotocol/sdk-js';
+
+async function issueAccessVC(claimerDid, expiry) {
+  const claimerAttestation = await Kilt.Attestation.authorizeClaim(
+    { cTypeHash: 'access_grant', claim: { expiry } },
+    claimerDid
+  );
+  return claimerAttestation;
+}
