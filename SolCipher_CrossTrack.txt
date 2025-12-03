@@ -1,0 +1,26 @@
+SolCipher_CrossTrack/
+├── README.md                 # Project docs, setup, Kiro integration guide
+├── package.json              # Dependencies (see below)
+├── .env.example              # Env vars (KIRO_RPC, HEDERA_ACCOUNT_ID, etc.)
+├── .gitignore
+├── contracts/                # Solidity for optional Hedera logging
+│   ├── AccessLog.sol         # Simple contract for HCS events
+│   └── hardhat.config.js     # Hedera testnet deploy
+├── src/                      # Frontend (Next.js)
+│   ├── components/
+│   │   ├── WalletConnect.jsx # HashPack/Blade integration
+│   │   ├── FileUploader.jsx  # Drag-drop with encryption
+│   │   ├── ShareModal.jsx    # Kiro VC issuance UI
+│   │   └── DecryptViewer.jsx # Verify + decrypt
+│   ├── lib/
+│   │   ├── kiro-sdk.js       # Kiro DID/VC wrappers
+│   │   ├── encryption.js     # AES/Argon2 utils
+│   │   └── ipfs.js           # Web3.Storage client
+│   ├── pages/
+│   │   ├── index.js          # Dashboard
+│   │   ├── upload.js         # Upload flow
+│   │   └── share/[cid].js    # Share by CID
+│   └── styles/               # CSS (Tailwind)
+├── scripts/
+│   └── deploy-testnet.js     # Hardhat deploy
+└── public/                   # Static assets (logo, etc.)
